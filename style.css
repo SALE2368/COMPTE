@@ -17,7 +17,9 @@
 body {
   margin: 0;
   min-width: 320px;
-  background: var(--page);
+  background:
+    radial-gradient(circle at 82% 8%, rgba(98, 94, 232, .055), transparent 24rem),
+    var(--page);
   color: var(--ink);
   font-family: 'Segoe UI', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -36,7 +38,7 @@ button { color: inherit; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e9edf4;
+  border-bottom: 1px solid rgba(233, 237, 244, .92);
 }
 
 .brand {
@@ -169,8 +171,8 @@ h1 span { color: var(--purple); }
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
   margin-bottom: 23px;
 }
 .summary-card, .panel {
@@ -179,7 +181,29 @@ h1 span { color: var(--purple); }
   border-radius: 17px;
   box-shadow: var(--shadow);
 }
-.summary-card { min-height: 145px; padding: 19px 20px 17px; }
+.summary-card {
+  min-height: 145px;
+  padding: 19px 18px 17px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.summary-card::after {
+  position: absolute;
+  right: -26px;
+  bottom: -34px;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+  opacity: .025;
+}
+.summary-card:hover {
+  border-color: rgba(98, 94, 232, .16);
+  box-shadow: 0 14px 38px rgba(37, 46, 86, .09);
+  transform: translateY(-2px);
+}
 .summary-top { display: flex; align-items: center; gap: 10px; }
 .summary-icon {
   width: 31px;
@@ -206,6 +230,51 @@ h1 span { color: var(--purple); }
 }
 .summary-note { margin: 0; color: #a0a5b4; font-size: 11px; }
 .negative-balance { color: #dc5b6d; }
+
+.livret-goal-panel { margin-bottom: 23px; }
+.livret-goal-panel .panel-heading { margin-bottom: 14px; }
+.livret-goal-icon { font-size: 24px; }
+.livret-goal-content {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+.goal-progress { flex: 1; min-width: 0; }
+.goal-status { margin: 0 0 10px; color: var(--ink); font-size: 13px; font-weight: 700; }
+.goal-progress-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #f0f1f7;
+}
+.goal-progress-track span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7772e8, #58bd9a);
+  transition: width .35s ease;
+}
+.goal-detail { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
+.goal-input-wrap { width: min(250px, 36%); display: grid; gap: 7px; }
+.goal-input-wrap label { color: #656c80; font-size: 11px; font-weight: 700; }
+.goal-input-wrap input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #e8eaf1;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  padding: 0 11px;
+  font-size: 13px;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.goal-input-wrap input:focus {
+  border-color: #aaa8f3;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(98, 94, 232, .1);
+}
+.goal-input-wrap > span { color: var(--muted); font-size: 10px; line-height: 1.45; }
 
 .content-grid {
   display: grid;
@@ -266,6 +335,10 @@ body.editing-operation .form-actions { grid-template-columns: minmax(0, 1fr) aut
 
 .panel-description { margin: -7px 0 19px; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .breakdown-list { display: grid; gap: 16px; }
+.breakdown-panel .breakdown-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 32px;
+}
 .breakdown-item { display: grid; gap: 8px; }
 .breakdown-labels { display: flex; justify-content: space-between; gap: 12px; color: #6d7387; font-size: 11px; }
 .breakdown-labels strong { color: #34394e; font-size: 11px; font-weight: 700; white-space: nowrap; }
@@ -300,6 +373,8 @@ th {
 td { padding: 13px 10px; border-bottom: 1px solid #f1f2f7; color: #6f7588; font-size: 11px; }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover td { background: #fbfbff; }
+.operation-name { transition: color .15s ease; }
+tbody tr:hover .operation-name { color: var(--purple); }
 .operation-name { margin-bottom: 4px; color: #30364c; font-size: 12px; font-weight: 700; }
 .type-dot { display: inline-flex; align-items: center; gap: 5px; color: #9a9fb0; font-size: 10px; }
 .type-dot::before { width: 6px; height: 6px; border-radius: 50%; background: var(--red); content: ''; }
@@ -371,6 +446,11 @@ footer span { padding: 0 4px; color: #c1c3ce; }
     --red: #ef8493;
     --shadow: 0 10px 35px rgba(0, 0, 0, .2);
   }
+  body.dark-mode {
+    background:
+      radial-gradient(circle at 82% 8%, rgba(161, 156, 255, .055), transparent 24rem),
+      var(--page);
+  }
 
   body.dark-mode .topbar { border-bottom-color: #303548; }
   body.dark-mode .brand-mark,
@@ -384,7 +464,8 @@ footer span { padding: 0 4px; color: #c1c3ce; }
   body.dark-mode .period-picker select,
   body.dark-mode #budget-form input,
   body.dark-mode #budget-form select,
-  body.dark-mode .filter-wrap select {
+  body.dark-mode .filter-wrap select,
+  body.dark-mode .goal-input-wrap input {
     border-color: #3a4057;
     background: #282d40;
     color: var(--ink);
@@ -402,14 +483,18 @@ footer span { padding: 0 4px; color: #c1c3ce; }
   body.dark-mode .livret-icon { color: #b3afff; background: #343253; }
   body.dark-mode .savings-icon { color: #79d8b2; background: #234237; }
   body.dark-mode .summary-label,
-  body.dark-mode #budget-form label { color: #c0c6d8; }
+  body.dark-mode #budget-form label,
+  body.dark-mode .goal-input-wrap label { color: #c0c6d8; }
   body.dark-mode .summary-note,
   body.dark-mode .breakdown-labels,
   body.dark-mode .filter-wrap,
-  body.dark-mode .privacy-note { color: #a0a7bb; }
+  body.dark-mode .privacy-note,
+  body.dark-mode .goal-detail,
+  body.dark-mode .goal-input-wrap > span { color: #a0a7bb; }
   body.dark-mode #budget-form input::placeholder { color: #858da4; }
   body.dark-mode .breakdown-labels strong { color: #e4e7f2; }
-  body.dark-mode .progress-track { background: #34394d; }
+  body.dark-mode .progress-track,
+  body.dark-mode .goal-progress-track { background: #34394d; }
   body.dark-mode .reset-button { color: #e28b99; }
   body.dark-mode .reset-button:hover { color: #ff9aa8; }
   body.dark-mode thead { color: #aab1c5; }
@@ -434,7 +519,8 @@ footer span { padding: 0 4px; color: #c1c3ce; }
 
 @media (max-width: 900px) {
   .app-shell { width: min(100% - 40px, 740px); }
-  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .livret-card { grid-column: span 1; }
   .content-grid { grid-template-columns: 1fr; }
   .operation-panel { order: 1; }
 }
@@ -459,6 +545,7 @@ footer span { padding: 0 4px; color: #c1c3ce; }
   .welcome-art { width: 180px; height: 112px; flex-basis: 180px; position: absolute; right: -45px; bottom: -3px; margin: 0; opacity: .28; }
   .art-sparkle { display: none; }
   .summary-grid { gap: 10px; margin-bottom: 15px; }
+  .livret-card { grid-column: span 2; }
   .summary-card { min-width: 0; min-height: 126px; padding: 14px 12px; border-radius: 14px; }
   .summary-icon { width: 27px; height: 27px; border-radius: 9px; }
   .summary-label { font-size: 10px; }
@@ -466,8 +553,14 @@ footer span { padding: 0 4px; color: #c1c3ce; }
   .summary-note { font-size: 9px; }
   .content-grid { gap: 13px; margin-bottom: 14px; }
   .panel, .transactions-panel { padding: 18px 15px; border-radius: 14px; }
+  .livret-goal-panel { margin-bottom: 15px; }
+  .livret-goal-content { align-items: stretch; flex-direction: column; gap: 18px; }
+  .goal-input-wrap { width: 100%; }
   h2 { font-size: 16px; }
   .panel-description { font-size: 11px; }
+  .breakdown-panel .breakdown-list {
+    grid-template-columns: 1fr;
+  }
   .transactions-heading { align-items: flex-start; gap: 11px; flex-direction: column; }
   .table-actions { width: 100%; flex-wrap: wrap; justify-content: space-between; gap: 6px; }
   .filter-wrap { flex: 1 1 100%; justify-content: space-between; }
@@ -506,6 +599,7 @@ footer span { padding: 0 4px; color: #c1c3ce; }
 
 body.entry-mode .welcome-row,
 body.entry-mode .summary-grid,
+body.entry-mode .livret-goal-panel,
 body.entry-mode .breakdown-panel,
 body.entry-mode .transactions-panel,
 body.entry-mode .privacy-note { display: none; }

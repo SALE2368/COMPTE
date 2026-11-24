@@ -129,6 +129,27 @@
         </article>
       </section>
 
+      <section class="panel livret-goal-panel" aria-labelledby="livret-goal-heading">
+        <div class="panel-heading">
+          <div><p class="eyebrow">OBJECTIF D’ÉPARGNE</p><h2 id="livret-goal-heading">Votre objectif Livret A</h2></div>
+          <span class="heading-icon livret-goal-icon" aria-hidden="true">◎</span>
+        </div>
+        <div class="livret-goal-content">
+          <div class="goal-progress">
+            <p class="goal-status" id="livret-goal-status">Définissez un montant pour suivre votre progression.</p>
+            <div class="goal-progress-track" id="livret-goal-progress" role="progressbar" aria-label="Progression vers l’objectif du Livret A" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Aucun objectif défini">
+              <span id="livret-goal-bar"></span>
+            </div>
+            <p class="goal-detail" id="livret-goal-detail">Votre cumul Livret A sera comparé à cet objectif.</p>
+          </div>
+          <div class="goal-input-wrap">
+            <label for="livret-a-objective">Objectif total (€)</label>
+            <input id="livret-a-objective" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Ex. 5 000">
+            <span>Modifiable à tout moment. La progression suit votre cumul Livret A.</span>
+          </div>
+        </div>
+      </section>
+
       <section class="content-grid">
         <article class="panel operation-panel" id="operation-panel">
           <div class="panel-heading">
@@ -246,9 +267,11 @@
     const storageKey = "monBudgetBudgets";
     const legacyStorageKey = "monBudgetData";
     const themeStorageKey = "monBudgetTheme";
+    const livretGoalStorageKey = "monBudgetLivretAObjectif";
     const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
     let budgets = {};
     let operations;
+    let livretGoal = 0;
     let editingOperationId = null;
     let toastTimer;
     let selectedPeriod = { month: new Date().getMonth(), year: new Date().getFullYear() };
@@ -327,6 +350,34 @@
       toast.classList.add("toast-visible");
       window.clearTimeout(toastTimer);
       toastTimer = window.setTimeout(() => toast.classList.remove("toast-visible"), 3200);
+    }
+
+    function loadLivretGoal() {
+      try {
+        const savedGoal = localStorage.getItem(livretGoalStorageKey);
+        if (savedGoal === null) return 0;
+        const goal = Number(savedGoal);
+        if (Number.isFinite(goal) && goal > 0) return goal;
+        throw new Error("L’objectif du Livret A enregistré est invalide.");
+      } catch (error) {
+        console.error(error);
+        showToast("Impossible de lire l’objectif du Livret A enregistré sur cet appareil.");
+        return 0;
+      }
+    }
+
+    function saveLivretGoal(goal) {
+      try {
+        if (goal > 0) localStorage.setItem(livretGoalStorageKey, String(goal));
+        else localStorage.removeItem(livretGoalStorageKey);
+      } catch (error) {
+        console.error(error);
+        showToast("Impossible d’enregistrer l’objectif du Livret A sur cet appareil.");
+        return false;
+      }
+      livretGoal = goal;
+      render();
+      return true;
     }
 
     function loadThemePreference() {
@@ -444,6 +495,7 @@
         format: "mon-budget-backup",
         version: 2,
         selectedPeriod: currentPeriodKey(),
+        livretGoal,
         budgets
       };
       downloadFile(
@@ -602,6 +654,40 @@
       const livretTotalElement = document.getElementById("kpi-livret-a");
       livretTotalElement.textContent = euro.format(livretATotal);
       livretTotalElement.classList.toggle("negative-balance", livretATotal < 0);
+      renderLivretGoal(livretATotal);
+    }
+
+    function renderLivretGoal(livretATotal) {
+      const progress = document.getElementById("livret-goal-progress");
+      const bar = document.getElementById("livret-goal-bar");
+      const status = document.getElementById("livret-goal-status");
+      const detail = document.getElementById("livret-goal-detail");
+
+      if (livretGoal <= 0) {
+        status.textContent = "Définissez un montant pour suivre votre progression.";
+        detail.textContent = "Votre cumul Livret A sera comparé à cet objectif.";
+        progress.setAttribute("aria-valuenow", "0");
+        progress.setAttribute("aria-valuetext", "Aucun objectif défini");
+        bar.style.width = "0%";
+        return;
+      }
+
+      const percentage = Math.min(100, Math.max(0, livretATotal / livretGoal * 100));
+      const remaining = Math.max(0, livretGoal - livretATotal);
+      const percentageLabel = Math.round(percentage);
+      progress.setAttribute("aria-valuenow", String(percentageLabel));
+      progress.setAttribute("aria-valuetext", `${percentageLabel} % de l’objectif atteint`);
+      bar.style.width = `${percentage}%`;
+
+      if (remaining === 0) {
+        status.textContent = "Objectif atteint !";
+        detail.textContent = livretATotal > livretGoal
+          ? `Objectif dépassé de ${euro.format(livretATotal - livretGoal)}.`
+          : "Bravo, vous avez atteint votre objectif.";
+      } else {
+        status.textContent = `${percentageLabel} % de votre objectif atteint`;
+        detail.textContent = `Encore ${euro.format(remaining)} pour atteindre votre objectif.`;
+      }
     }
 
     function renderBreakdown() {
@@ -776,6 +862,20 @@
 
     setTheme(loadThemePreference());
     renderPeriodPicker();
+    livretGoal = loadLivretGoal();
+    const livretGoalInput = document.getElementById("livret-a-objective");
+    livretGoalInput.value = livretGoal > 0 ? String(livretGoal) : "";
+    livretGoalInput.addEventListener("change", event => {
+      const input = event.currentTarget;
+      const value = input.value.trim();
+      const nextGoal = value === "" ? 0 : Number(value);
+      if (!Number.isFinite(nextGoal) || nextGoal < 0 || (value !== "" && nextGoal === 0)) {
+        input.value = livretGoal > 0 ? String(livretGoal) : "";
+        showToast("Saisissez un objectif supérieur à zéro ou laissez le champ vide pour le supprimer.");
+        return;
+      }
+      if (!saveLivretGoal(nextGoal)) input.value = livretGoal > 0 ? String(livretGoal) : "";
+    });
     document.getElementById("budget-month").addEventListener("change", event => {
       animateSelect(event.currentTarget);
       selectedPeriod.month = Number(event.currentTarget.value);
@@ -835,6 +935,9 @@
           throw new Error("Ce fichier n’est pas une sauvegarde Mon Budget valide.");
         }
         let restoredBudgets;
+        const hasLivretGoal = backup.version === 2 &&
+          Object.prototype.hasOwnProperty.call(backup, "livretGoal");
+        let restoredLivretGoal = livretGoal;
         if (backup.version === 2 && isValidBudgets(backup.budgets)) {
           restoredBudgets = backup.budgets;
         } else if (backup.version === 1 && isValidOperations(backup.operations)) {
@@ -842,11 +945,24 @@
         } else {
           throw new Error("Ce fichier n’est pas une sauvegarde Mon Budget valide.");
         }
+        if (hasLivretGoal) {
+          if (typeof backup.livretGoal !== "number" ||
+            !Number.isFinite(backup.livretGoal) || backup.livretGoal < 0) {
+            throw new Error("L’objectif du Livret A de cette sauvegarde est invalide.");
+          }
+          restoredLivretGoal = backup.livretGoal;
+        }
         if (saveBudgets(restoredBudgets)) {
           operations = (budgets[currentPeriodKey()] || []).map(operation => ({ ...operation }));
           populateFilters();
-          render();
-          showToast(`Sauvegarde restaurée. Budget affiché : ${selectedPeriodLabel()}.`);
+          const goalSaved = !hasLivretGoal || saveLivretGoal(restoredLivretGoal);
+          if (!goalSaved) {
+            render();
+            showToast("Budget restauré, mais l’objectif du Livret A n’a pas pu être enregistré.");
+          } else {
+            if (!hasLivretGoal) render();
+            showToast(`Sauvegarde restaurée. Budget affiché : ${selectedPeriodLabel()}.`);
+          }
         }
       } catch (error) {
         showToast(error instanceof SyntaxError ? "Le fichier de sauvegarde est illisible." : error.message);
